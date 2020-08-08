@@ -617,15 +617,15 @@ async function buildEverything() {
     await createBundle(bundle, NODE_DEV);
     await createBundle(bundle, NODE_PROD);
     await createBundle(bundle, NODE_PROFILING);
-    await createBundle(bundle, FB_WWW_DEV);
-    await createBundle(bundle, FB_WWW_PROD);
-    await createBundle(bundle, FB_WWW_PROFILING);
-    await createBundle(bundle, RN_OSS_DEV);
-    await createBundle(bundle, RN_OSS_PROD);
-    await createBundle(bundle, RN_OSS_PROFILING);
-    await createBundle(bundle, RN_FB_DEV);
-    await createBundle(bundle, RN_FB_PROD);
-    await createBundle(bundle, RN_FB_PROFILING);
+    // await createBundle(bundle, FB_WWW_DEV);
+    // await createBundle(bundle, FB_WWW_PROD);
+    // await createBundle(bundle, FB_WWW_PROFILING);
+    // await createBundle(bundle, RN_OSS_DEV);
+    // await createBundle(bundle, RN_OSS_PROD);
+    // await createBundle(bundle, RN_OSS_PROFILING);
+    // await createBundle(bundle, RN_FB_DEV);
+    // await createBundle(bundle, RN_FB_PROD);
+    // await createBundle(bundle, RN_FB_PROFILING);
   }
 
   await Packaging.copyAllShims();
