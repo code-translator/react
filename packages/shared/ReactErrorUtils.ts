@@ -42,13 +42,12 @@ export function invokeGuardedCallback<A, B, C, D, E, F, Context>(
 name: string | null,
 func: (a: A, b: B, c: C, d: D, e: E, f: F) => unknown,
 context: Context,
-a: A,
-b: B,
-c: C,
-d: D,
-e: E,
-f: F)
-: undefined {
+a?: A,
+b?: B,
+c?: C,
+d?: D,
+e?: E,
+f?: F): void {
   hasError = false;
   caughtError = null;
   invokeGuardedCallbackImpl.apply(reporter, arguments);

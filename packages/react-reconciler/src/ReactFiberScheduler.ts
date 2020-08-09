@@ -180,7 +180,6 @@ import { ContextOnlyDispatcher } from './ReactFiberHooks';
 export type Thenable = {
   then: (resolve: () => unknown, reject: () => unknown) => unknown;};
 
-
 const { ReactCurrentDispatcher, ReactCurrentOwner } = ReactSharedInternals;
 
 let didWarnAboutStateTransition;
@@ -373,6 +372,9 @@ if (__DEV__ && replayFailedUnitOfWorkWithInvokeGuardedCallback) {
   };
 }
 
+/**
+ * nextUnitOfWork 指向根节点
+ */
 function resetStack() {
   if (nextUnitOfWork !== null) {
     let interruptedWork = nextUnitOfWork.return;
@@ -394,6 +396,11 @@ function resetStack() {
   nextUnitOfWork = null;
 }
 
+/**
+ * @DOVYIH
+ * 执行 placement、update，deletion等 DOM 操作
+ *
+ */
 function commitAllHostEffects() {
   while (nextEffect !== null) {
     if (__DEV__) {
@@ -481,6 +488,14 @@ function commitBeforeMutationLifecycles() {
   }
 }
 
+/**
+ * @DOVYIH
+ * 触发 componentDidUpdate 生命周期函数和
+ * MountLayout 副作用
+ *
+ * @param {FiberRoot} finishedRoot
+ * @param {ExpirationTime} committedExpirationTime
+ */
 function commitAllLifeCycles(finishedRoot:
 FiberRoot, committedExpirationTime:
 ExpirationTime)
@@ -598,6 +613,7 @@ function markLegacyErrorBoundaryAsFailed(instance: unknown) {
 
 function flushPassiveEffects() {
   if (passiveEffectCallbackHandle !== null) {
+    // TODO: 干了啥？
     cancelPassiveEffects(passiveEffectCallbackHandle);
   }
   if (passiveEffectCallback !== null) {
@@ -724,6 +740,7 @@ function commitRoot(root: FiberRoot, finishedWork: Fiber): void {
       }
     } else {
       try {
+        // 进行 DON 操作
         commitAllHostEffects();
       } catch (e) {
         didError = true;
@@ -776,6 +793,11 @@ function commitRoot(root: FiberRoot, finishedWork: Fiber): void {
       }
     } else {
       try {
+        /**
+         * @DOVYIH
+         * 触发 componentDidUpdate 生命周期函数和
+         * MountLayout 副作用
+         */
         commitAllLifeCycles(root, committedExpirationTime);
       } catch (e) {
         didError = true;
@@ -1230,6 +1252,8 @@ function renderRoot(root: FiberRoot, isYieldy: boolean): void {
   flushPassiveEffects();
 
   isWorking = true;
+
+  /** ReactCurrentDispatcher 指向当前被渲染的 Fiber */
   const previousDispatcher = ReactCurrentDispatcher.current;
   ReactCurrentDispatcher.current = ContextOnlyDispatcher;
 

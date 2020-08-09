@@ -222,10 +222,14 @@ function safelyCallDestroy(current, destroy) {
   }
 }
 
-function commitBeforeMutationLifeCycles(current:
-Fiber | null, finishedWork:
-Fiber)
-: void {
+/**
+ * 触发 getSnapshotBeforeUpdate 生命钩子
+ *
+ * @param {(Fiber | null)} current
+ * @param {Fiber} finishedWork
+ * @returns {void}
+ */
+function commitBeforeMutationLifeCycles(current: Fiber | null, finishedWork: Fiber): void {
   switch (finishedWork.tag) {
     case FunctionComponent:
     case ForwardRef:
@@ -311,10 +315,14 @@ Fiber)
 
 }
 
-function commitHookEffectList(unmountTag:
-number, mountTag:
-number, finishedWork:
-Fiber)
+/**
+ * @DOVYIH
+ *
+ * @param {number} unmountTag UnmountSnapshot |
+ * @param {number} mountTag
+ * @param {Fiber} finishedWork
+ */
+function commitHookEffectList(unmountTag: number, mountTag: number, finishedWork: Fiber)
 {
   const updateQueue: FunctionComponentUpdateQueue | null = (finishedWork.updateQueue as any);
   let lastEffect = updateQueue !== null ? updateQueue.lastEffect : null;
@@ -375,11 +383,22 @@ Fiber)
   }
 }
 
-export function commitPassiveHookEffects(finishedWork: Fiber): undefined {
+export function commitPassiveHookEffects(finishedWork: Fiber): void {
   commitHookEffectList(UnmountPassive, NoHookEffect, finishedWork);
   commitHookEffectList(NoHookEffect, MountPassive, finishedWork);
 }
 
+/**
+ * @DOVYIH
+ * 触发 componentDidUpdate 生命周期函数和
+ * MountLayout 副作用
+ *
+ * @param {FiberRoot} finishedRoot
+ * @param {(Fiber | null)} current
+ * @param {Fiber} finishedWork
+ * @param {ExpirationTime} committedExpirationTime
+ * @returns {void}
+ */
 function commitLifeCycles(finishedRoot:
 FiberRoot, current:
 Fiber | null, finishedWork:

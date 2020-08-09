@@ -17,7 +17,7 @@
      * will remain to ensure logic does not differ in production.
      */
 
-let validateFormat = () => {};
+let validateFormat = (fromnat: string) => {};
 
 if (__DEV__) {
   validateFormat = function (format) {
@@ -27,7 +27,7 @@ if (__DEV__) {
   };
 }
 
-export default function invariant(condition, format, a, b, c, d, e, f) {
+export default function invariant(condition: boolean, format: string, a?: any, b?: any, c?: any, d?: any, e?: any, f?: any) {
   validateFormat(format);
 
   if (!condition) {

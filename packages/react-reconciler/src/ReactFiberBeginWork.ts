@@ -532,13 +532,10 @@ function markRef(current: Fiber | null, workInProgress: Fiber) {
   }
 }
 
-function updateFunctionComponent(current, workInProgress, Component, nextProps:
-
-
-
-any, renderExpirationTime)
-
-{
+function updateFunctionComponent(
+  current: Fiber, workInProgress: Fiber,
+  Component, nextProps: any, renderExpirationTime
+) {
   if (__DEV__) {
     if (workInProgress.type !== workInProgress.elementType) {
       // Lazy component props can't be validated in createElement
@@ -591,6 +588,7 @@ any, renderExpirationTime)
     }
     setCurrentPhase(null);
   } else {
+    // 执行 函数组件 返回 js vDOM
     nextChildren = renderWithHooks(
     current,
     workInProgress,
@@ -1890,11 +1888,10 @@ ExpirationTime)
   }
 }
 
-function beginWork(current:
-Fiber | null, workInProgress:
-Fiber, renderExpirationTime:
-ExpirationTime)
-: Fiber | null {
+function beginWork(
+  current: Fiber | null, workInProgress: Fiber,
+  renderExpirationTime: ExpirationTime
+): Fiber | null {
   const updateExpirationTime = workInProgress.expirationTime;
 
   if (current !== null) {
@@ -2033,12 +2030,11 @@ ExpirationTime)
         unresolvedProps :
         resolveDefaultProps(Component, unresolvedProps);
         return updateFunctionComponent(
-        current,
-        workInProgress,
-        Component,
-        resolvedProps,
-        renderExpirationTime);
-
+          current,
+          workInProgress,
+          Component,
+          resolvedProps,
+          renderExpirationTime);
       }
     case ClassComponent:{
         const Component = workInProgress.type;

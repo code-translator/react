@@ -10,6 +10,13 @@
 
 import { enableSchedulerDebugging } from './SchedulerFeatureFlags';
 
+interface CallbackNode {
+  callback: Function,
+  priorityLevel: number,
+  expirationTime: number,
+  next: CallbackNode,
+  previous: CallbackNode
+};
 // TODO: Use symbols?
 var ImmediatePriority = 1;
 var UserBlockingPriority = 2;
@@ -32,8 +39,12 @@ var LOW_PRIORITY_TIMEOUT = 10000;
 var IDLE_PRIORITY = maxSigned31BitInt;
 
 // ===============全局变量===============
+/**
+ * @DOVYIH 指向双向循环链表的第一个节点
+ * 这个一个按过期时间从小达大排序的双向链表
+ */
 // Callbacks are stored as a circular, doubly linked list.
-var firstCallbackNode = null;
+var firstCallbackNode: CallbackNode = null;
 
 // TOOD: 是否超时
 var currentDidTimeout = false;
@@ -47,6 +58,7 @@ var currentExpirationTime = -1;
 // This is set when a callback is being executed, to prevent re-entrancy.
 var isExecutingCallback = false;
 
+// HostCallbal 是啥？
 var isHostCallbackScheduled = false;
 
 var hasNativePerformanceNow =
@@ -91,6 +103,7 @@ function flushFirstCallback() {
 
   // Now it's safe to call the callback.
   var callback = flushedNode.callback;
+  /** @DOVYIH 被刷新的节点过期时间 */
   var expirationTime = flushedNode.expirationTime;
   var priorityLevel = flushedNode.priorityLevel;
   var previousPriorityLevel = currentPriorityLevel;
@@ -124,7 +137,7 @@ function flushFirstCallback() {
       // This is the first callback in the list.
       firstCallbackNode = continuationNode.next = continuationNode.previous = continuationNode;
     } else {
-      var nextAfterContinuation = null;
+      var nextAfterContinuation: CallbackNode = null;
       var node = firstCallbackNode;
       do {
         if (node.expirationTime >= expirationTime) {
@@ -146,6 +159,7 @@ function flushFirstCallback() {
         ensureHostCallbackIsScheduled();
       }
 
+      /** @DOVYIH continuationNode 插入到 nextAfterContinuation 前面 */
       var previous = nextAfterContinuation.previous;
       previous.next = nextAfterContinuation.previous = continuationNode;
       continuationNode.next = nextAfterContinuation;
@@ -182,6 +196,13 @@ function flushImmediateWork() {
   }
 }
 
+/**
+ * @DOVYIH
+ * 在 ensureHostCallbackIsScheduled 被 rAF 调用
+ *
+ * @param {*} didTimeout
+ * @returns
+ */
 function flushWork(didTimeout) {
   // Exit right away if we're currently paused
 
@@ -319,7 +340,15 @@ function unstable_wrapCallback(callback) {
   };
 }
 
-function unstable_scheduleCallback(callback, deprecated_options) {
+/**
+ * @DOVYIH
+ * 将 callback 包装成 CallbackNode，按过期时间插入调度双向链表
+ *
+ * @param {Function} callback
+ * @param {{ timeout: number }} deprecated_options
+ * @returns
+ */
+function unstable_scheduleCallback(callback: Function, deprecated_options: { timeout: number }) {
   var startTime =
   currentEventStartTime !== -1 ? currentEventStartTime : getCurrentTime();
 
@@ -351,7 +380,7 @@ function unstable_scheduleCallback(callback, deprecated_options) {
 
   }
 
-  var newNode = {
+  var newNode: CallbackNode = {
     callback,
     priorityLevel: currentPriorityLevel,
     expirationTime,
@@ -513,7 +542,13 @@ if (hasNativePerformanceNow) {
   };
 }
 
-var requestHostCallback;
+/**
+ * 根据不同环境 requestHostCallback 行为也不一致
+ * 1.测试环境
+ * 2.非浏览器环境
+ * 3.浏览器环境
+ */
+var requestHostCallback: (callback: Function, absoluteTimeout: number) => void;
 var cancelHostCallback;
 var shouldYieldToHost;
 
@@ -588,6 +623,7 @@ typeof MessageChannel !== 'function')
   var isMessageEventScheduled = false;
   var timeoutTime = -1;
 
+  /** 当前 frame 是否已经有 callback 在frame 结束时执行 */
   var isAnimationFrameScheduled = false;
 
   var isFlushingHostCallback = false;
