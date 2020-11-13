@@ -15,11 +15,10 @@ import { NoWork } from './ReactFiberExpirationTime';
 // TODO: Offscreen updates should never suspend. However, a promise that
 // suspended inside an offscreen subtree should be able to ping at the priority
 // of the outer render.
-
 export function markPendingPriorityLevel(
-root: FiberRoot,
-expirationTime: ExpirationTime)
-: undefined {
+  root: FiberRoot,
+  expirationTime: ExpirationTime
+) : void {
   // If there's a gap between completing a failed root and retrying it,
   // additional updates may be scheduled. Clear `didError`, in case the update
   // is sufficient to fix the error.
@@ -124,9 +123,9 @@ earliestRemainingTime: ExpirationTime)
 }
 
 export function hasLowerPriorityWork(
-root: FiberRoot,
-erroredExpirationTime: ExpirationTime)
-: boolean {
+    root: FiberRoot,
+    erroredExpirationTime: ExpirationTime
+  ): boolean {
   const latestPendingTime = root.latestPendingTime;
   const latestSuspendedTime = root.latestSuspendedTime;
   const latestPingedTime = root.latestPingedTime;

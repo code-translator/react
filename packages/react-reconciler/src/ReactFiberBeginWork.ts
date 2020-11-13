@@ -172,11 +172,12 @@ renderExpirationTime: ExpirationTime)
 
     // If we had any progressed work already, that is invalid at this point so
     // let's throw it out.
+    // TRACE[Render] 初次渲染
     workInProgress.child = reconcileChildFibers(
-    workInProgress,
-    current.child,
-    nextChildren,
-    renderExpirationTime);
+      workInProgress,
+      current.child,
+      nextChildren,
+      renderExpirationTime);
 
   }
 }
@@ -780,6 +781,7 @@ ExpirationTime)
       }
       setCurrentPhase(null);
     } else {
+      // TRACE[Render] 调用组件 Render 方法
       nextChildren = instance.render();
     }
   }
@@ -798,11 +800,12 @@ ExpirationTime)
     renderExpirationTime);
 
   } else {
+    // TRACE[Render] 调用组件 Render 方法
     reconcileChildren(
-    current,
-    workInProgress,
-    nextChildren,
-    renderExpirationTime);
+      current,
+      workInProgress,
+      nextChildren,
+      renderExpirationTime);
 
   }
 
@@ -828,6 +831,7 @@ function pushHostRootContext(workInProgress) {
 
   } else if (root.context) {
     // Should always be set
+    // TRACE[Render] 初次渲染
     pushTopLevelContextObject(workInProgress, root.context, false);
   }
   pushHostContainer(workInProgress, root.containerInfo);
@@ -845,12 +849,8 @@ function updateHostRoot(current, workInProgress, renderExpirationTime) {
   const nextProps = workInProgress.pendingProps;
   const prevState = workInProgress.memoizedState;
   const prevChildren = prevState !== null ? prevState.element : null;
-  processUpdateQueue(
-  workInProgress,
-  updateQueue,
-  nextProps,
-  null,
-  renderExpirationTime);
+  // TRACE[Render] 初次渲染
+  processUpdateQueue(workInProgress, updateQueue, nextProps, null, renderExpirationTime);
 
   const nextState = workInProgress.memoizedState;
   // Caution: React DevTools currently depends on this property
@@ -868,9 +868,9 @@ function updateHostRoot(current, workInProgress, renderExpirationTime) {
   }
   const root: FiberRoot = workInProgress.stateNode;
   if (
-  (current === null || current.child === null) &&
-  root.hydrate &&
-  enterHydrationState(workInProgress))
+    (current === null || current.child === null) &&
+    root.hydrate &&
+    enterHydrationState(workInProgress))
   {
     // If we don't have any current children this might be the first pass.
     // We always try to hydrate. If this isn't a hydration pass there won't
@@ -893,13 +893,14 @@ function updateHostRoot(current, workInProgress, renderExpirationTime) {
     renderExpirationTime);
 
   } else {
+    // TRACE[Render] 初次渲染
     // Otherwise reset hydration state in case we aborted and resumed another
     // root.
     reconcileChildren(
-    current,
-    workInProgress,
-    nextChildren,
-    renderExpirationTime);
+      current,
+      workInProgress,
+      nextChildren,
+      renderExpirationTime);
 
     resetHydrationState();
   }
@@ -2052,6 +2053,7 @@ function beginWork(
 
       }
     case HostRoot:
+      // TRACE[Render] 初次渲染
       return updateHostRoot(current, workInProgress, renderExpirationTime);
     case HostComponent:
       return updateHostComponent(current, workInProgress, renderExpirationTime);

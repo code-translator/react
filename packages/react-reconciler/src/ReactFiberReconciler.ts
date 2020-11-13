@@ -92,9 +92,7 @@ if (__DEV__) {
   didWarnAboutFindNodeInStrictMode = {};
 }
 
-function getContextForSubtree(parentComponent:
-React$Component<any, any> | null | undefined)
-: Object {
+function getContextForSubtree(parentComponent: React$Component<any, any> | null | undefined): Object {
   if (!parentComponent) {
     return emptyContextObject;
   }
@@ -111,13 +109,12 @@ React$Component<any, any> | null | undefined)
 
   return parentContext;
 }
-
-function scheduleRootUpdate(current:
-Fiber, element:
-ReactNodeList, expirationTime:
-ExpirationTime, callback:
-Function | null | undefined)
-{
+// TRACE[Render]
+function scheduleRootUpdate(
+  current: Fiber,
+  element: ReactNodeList,
+  expirationTime: ExpirationTime,
+  callback: (() => unknown) | null | undefined) {
   if (__DEV__) {
     if (
     ReactCurrentFiberPhase === 'render' &&
@@ -136,6 +133,7 @@ Function | null | undefined)
     }
   }
 
+  // TRACE[render] 暂时不懂
   const update = createUpdate(expirationTime);
   // Caution: React DevTools currently depends on this property
   // being called "element".
@@ -151,14 +149,15 @@ Function | null | undefined)
 
     update.callback = callback;
   }
-
+  // TRACE[render] 初次加载时没有效果
   flushPassiveEffects();
+  // TRACE[render] 将 update 加到 current.updateQueue.{first,last}Updata
   enqueueUpdate(current, update);
   scheduleWork(current, expirationTime);
 
   return expirationTime;
 }
-
+// TRACE[Render]
 export function updateContainerAtExpirationTime(
 element: ReactNodeList,
 container: OpaqueRoot,
@@ -279,7 +278,7 @@ hydrate: boolean)
 : OpaqueRoot {
   return createFiberRoot(containerInfo, isConcurrent, hydrate);
 }
-
+//  TRACE[Render] 包装 updateContainerAtExpirationTime
 export function updateContainer(
 element: ReactNodeList,
 container: OpaqueRoot,
@@ -289,13 +288,7 @@ callback: Function | null | undefined)
   const current = container.current;
   const currentTime = requestCurrentTime();
   const expirationTime = computeExpirationForFiber(currentTime, current);
-  return updateContainerAtExpirationTime(
-  element,
-  container,
-  parentComponent,
-  expirationTime,
-  callback);
-
+  return updateContainerAtExpirationTime(element,container,parentComponent,expirationTime,callback);
 }
 
 export {

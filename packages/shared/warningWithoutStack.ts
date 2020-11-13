@@ -12,7 +12,7 @@
      * same logic and follow the same code paths.
      */
 
-let warningWithoutStack = () => {};
+let warningWithoutStack = (bool: boolean, msg1: string, msg2?: string) => {};
 
 if (__DEV__) {
   warningWithoutStack = function (condition, format, ...args) {

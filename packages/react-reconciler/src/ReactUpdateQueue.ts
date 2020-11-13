@@ -84,52 +84,75 @@
 // regardless of priority. Intermediate state may vary according to system
 // resources, but the final state is always the same.
 
-import { Fiber } from './ReactFiber';
-import { ExpirationTime } from './ReactFiberExpirationTime';
-
-import { NoWork } from './ReactFiberExpirationTime';
 import {
-enterDisallowedContextReadInDEV,
-exitDisallowedContextReadInDEV } from
-'./ReactFiberNewContext';
-import { Callback, ShouldCapture, DidCapture } from 'shared/ReactSideEffectTags';
-import { ClassComponent } from 'shared/ReactWorkTags';
+  Fiber
+} from './ReactFiber';
+import {
+  ExpirationTime
+} from './ReactFiberExpirationTime';
 
 import {
-debugRenderPhaseSideEffects,
-debugRenderPhaseSideEffectsForStrictMode } from
-'shared/ReactFeatureFlags';
+  NoWork
+} from './ReactFiberExpirationTime';
+import {
+  enterDisallowedContextReadInDEV,
+  exitDisallowedContextReadInDEV
+} from './ReactFiberNewContext';
+import {
+  Callback,
+  ShouldCapture,
+  DidCapture
+} from 'shared/ReactSideEffectTags';
+import {
+  ClassComponent
+} from 'shared/ReactWorkTags';
 
-import { StrictMode } from './ReactTypeOfMode';
+import {
+  debugRenderPhaseSideEffects,
+  debugRenderPhaseSideEffectsForStrictMode
+} from 'shared/ReactFeatureFlags';
+
+import {
+  StrictMode
+} from './ReactTypeOfMode';
 
 import invariant from 'shared/invariant';
 import warningWithoutStack from 'shared/warningWithoutStack';
-
-export type Update<State> = {
+import {
+  ReactNodeList
+} from 'shared/ReactTypes';
+/**
+ * 更新的单元
+ */
+export type Update < State > = {
   expirationTime: ExpirationTime;
 
   tag: 0 | 1 | 2 | 3;
-  payload: any;
+  payload: {
+    element: ReactNodeList
+  };
   callback: (() => unknown) | null;
 
-  next: Update<State> | null;
-  nextEffect: Update<State> | null;};
+  next: Update < State > | null;
+  nextEffect: Update < State > | null;
+};
 
 
-export type UpdateQueue<State> = {
+export type UpdateQueue < State > = {
   baseState: State;
 
-  firstUpdate: Update<State> | null;
-  lastUpdate: Update<State> | null;
+  firstUpdate: Update < State > | null;
+  lastUpdate: Update < State > | null;
 
-  firstCapturedUpdate: Update<State> | null;
-  lastCapturedUpdate: Update<State> | null;
+  firstCapturedUpdate: Update < State > | null;
+  lastCapturedUpdate: Update < State > | null;
 
-  firstEffect: Update<State> | null;
-  lastEffect: Update<State> | null;
+  firstEffect: Update < State > | null;
+  lastEffect: Update < State > | null;
 
-  firstCapturedEffect: Update<State> | null;
-  lastCapturedEffect: Update<State> | null;};
+  firstCapturedEffect: Update < State > | null;
+  lastCapturedEffect: Update < State > | null;
+};
 
 
 export const UpdateState = 0;
@@ -153,25 +176,26 @@ if (__DEV__) {
   };
 }
 
-export function createUpdateQueue<State>(baseState: State): UpdateQueue<State> {
-  const queue: UpdateQueue<State> = {
-    baseState,
-    firstUpdate: null,
-    lastUpdate: null,
-    firstCapturedUpdate: null,
-    lastCapturedUpdate: null,
-    firstEffect: null,
-    lastEffect: null,
-    firstCapturedEffect: null,
-    lastCapturedEffect: null };
+export function createUpdateQueue < State > (baseState: State): UpdateQueue <
+  State > {
+    const queue: UpdateQueue < State > = {
+      baseState,
+      firstUpdate: null,
+      lastUpdate: null,
+      firstCapturedUpdate: null,
+      lastCapturedUpdate: null,
+      firstEffect: null,
+      lastEffect: null,
+      firstCapturedEffect: null,
+      lastCapturedEffect: null
+    };
 
-  return queue;
-}
+    return queue;
+  }
 
-function cloneUpdateQueue<State>(currentQueue:
-UpdateQueue<State>)
-: UpdateQueue<State> {
-  const queue: UpdateQueue<State> = {
+function cloneUpdateQueue < State > (currentQueue:
+  UpdateQueue < State > ): UpdateQueue < State > {
+  const queue: UpdateQueue < State > = {
     baseState: currentQueue.baseState,
     firstUpdate: currentQueue.firstUpdate,
     lastUpdate: currentQueue.lastUpdate,
@@ -185,12 +209,13 @@ UpdateQueue<State>)
     lastEffect: null,
 
     firstCapturedEffect: null,
-    lastCapturedEffect: null };
+    lastCapturedEffect: null
+  };
 
   return queue;
 }
 
-export function createUpdate(expirationTime: ExpirationTime): Update<any> {
+export function createUpdate(expirationTime: ExpirationTime): Update < any > {
   return {
     expirationTime: expirationTime,
 
@@ -199,14 +224,14 @@ export function createUpdate(expirationTime: ExpirationTime): Update<any> {
     callback: null,
 
     next: null,
-    nextEffect: null };
+    nextEffect: null
+  };
 
 }
 
-function appendUpdateToQueue<State>(queue:
-UpdateQueue<State>, update:
-Update<State>)
-{
+function appendUpdateToQueue < State > (queue:
+  UpdateQueue < State > , update:
+  Update < State > ) {
   // Append the update to the end of the list.
   if (queue.lastUpdate === null) {
     // Queue is empty
@@ -217,7 +242,8 @@ Update<State>)
   }
 }
 
-export function enqueueUpdate<State>(fiber: Fiber, update: Update<State>) {
+export function enqueueUpdate < State > (fiber: Fiber, update: Update < State >
+  ) {
   // Update queues are created lazily.
   const alternate = fiber.alternate;
   let queue1;
@@ -238,7 +264,7 @@ export function enqueueUpdate<State>(fiber: Fiber, update: Update<State>) {
         // Neither fiber has an update queue. Create new ones.
         queue1 = fiber.updateQueue = createUpdateQueue(fiber.memoizedState);
         queue2 = alternate.updateQueue = createUpdateQueue(
-        alternate.memoizedState);
+          alternate.memoizedState);
 
       } else {
         // Only one fiber has an update queue. Clone to create a new one.
@@ -275,58 +301,56 @@ export function enqueueUpdate<State>(fiber: Fiber, update: Update<State>) {
 
   if (__DEV__) {
     if (
-    fiber.tag === ClassComponent && (
-    currentlyProcessingQueue === queue1 ||
-    queue2 !== null && currentlyProcessingQueue === queue2) &&
-    !didWarnUpdateInsideUpdate)
-    {
+      fiber.tag === ClassComponent && (
+        currentlyProcessingQueue === queue1 ||
+        queue2 !== null && currentlyProcessingQueue === queue2) &&
+      !didWarnUpdateInsideUpdate) {
       warningWithoutStack(
-      false,
-      'An update (setState, replaceState, or forceUpdate) was scheduled ' +
-      'from inside an update function. Update functions should be pure, ' +
-      'with zero side-effects. Consider using componentDidUpdate or a ' +
-      'callback.');
+        false,
+        'An update (setState, replaceState, or forceUpdate) was scheduled ' +
+        'from inside an update function. Update functions should be pure, ' +
+        'with zero side-effects. Consider using componentDidUpdate or a ' +
+        'callback.');
 
       didWarnUpdateInsideUpdate = true;
     }
   }
 }
 
-export function enqueueCapturedUpdate<State>(
-workInProgress: Fiber,
-update: Update<State>)
-{
+export function enqueueCapturedUpdate < State > (
+  workInProgress: Fiber,
+  update: Update < State > ) {
   // Captured updates go into a separate list, and only on the work-in-
   // progress queue.
   let workInProgressQueue = workInProgress.updateQueue;
   if (workInProgressQueue === null) {
     workInProgressQueue = workInProgress.updateQueue = createUpdateQueue(
-    workInProgress.memoizedState);
+      workInProgress.memoizedState);
 
   } else {
     // TODO: I put this here rather than createWorkInProgress so that we don't
     // clone the queue unnecessarily. There's probably a better way to
     // structure this.
     workInProgressQueue = ensureWorkInProgressQueueIsAClone(
-    workInProgress,
-    workInProgressQueue);
+      workInProgress,
+      workInProgressQueue);
 
   }
 
   // Append the update to the end of the list.
   if (workInProgressQueue.lastCapturedUpdate === null) {
     // This is the first render phase update
-    workInProgressQueue.firstCapturedUpdate = workInProgressQueue.lastCapturedUpdate = update;
+    workInProgressQueue.firstCapturedUpdate = workInProgressQueue
+      .lastCapturedUpdate = update;
   } else {
     workInProgressQueue.lastCapturedUpdate.next = update;
     workInProgressQueue.lastCapturedUpdate = update;
   }
 }
 
-function ensureWorkInProgressQueueIsAClone<State>(workInProgress:
-Fiber, queue:
-UpdateQueue<State>)
-: UpdateQueue<State> {
+function ensureWorkInProgressQueueIsAClone < State > (workInProgress:
+  Fiber, queue:
+  UpdateQueue < State > ): UpdateQueue < State > {
   const current = workInProgress.alternate;
   if (current !== null) {
     // If the work-in-progress queue is equal to the current queue,
@@ -338,88 +362,88 @@ UpdateQueue<State>)
   return queue;
 }
 
-function getStateFromUpdate<State>(workInProgress:
-Fiber, queue:
-UpdateQueue<State>, update:
-Update<State>, prevState:
-State, nextProps:
-any, instance:
-any)
-: any {
+function getStateFromUpdate <State> (
+  workInProgress:Fiber,
+  queue:UpdateQueue < State > ,
+  update:Update < State > ,
+  prevState: State,
+  nextProps: any,
+  instance: any
+): any {
   switch (update.tag) {
-    case ReplaceState:{
-        const payload = update.payload;
-        if (typeof payload === 'function') {
-          // Updater function
-          if (__DEV__) {
-            enterDisallowedContextReadInDEV();
-            if (
+    case ReplaceState: {
+      const payload = update.payload;
+      if (typeof payload === 'function') {
+        // Updater function
+        if (__DEV__) {
+          enterDisallowedContextReadInDEV();
+          if (
             debugRenderPhaseSideEffects ||
             debugRenderPhaseSideEffectsForStrictMode &&
-            workInProgress.mode & StrictMode)
-            {
-              payload.call(instance, prevState, nextProps);
-            }
+            workInProgress.mode & StrictMode) {
+            payload.call(instance, prevState, nextProps);
           }
-          const nextState = payload.call(instance, prevState, nextProps);
-          if (__DEV__) {
-            exitDisallowedContextReadInDEV();
-          }
-          return nextState;
         }
-        // State object
-        return payload;
+        const nextState = payload.call(instance, prevState, nextProps);
+        if (__DEV__) {
+          exitDisallowedContextReadInDEV();
+        }
+        return nextState;
       }
-    case CaptureUpdate:{
-        workInProgress.effectTag =
+      // State object
+      return payload;
+    }
+    case CaptureUpdate: {
+      workInProgress.effectTag =
         workInProgress.effectTag & ~ShouldCapture | DidCapture;
-      }
+    }
     // Intentional fallthrough
-    case UpdateState:{
-        const payload = update.payload;
-        let partialState;
-        if (typeof payload === 'function') {
-          // Updater function
-          if (__DEV__) {
-            enterDisallowedContextReadInDEV();
-            if (
+    case UpdateState: {
+      // TRACE[Render] 初次渲染
+      const payload = update.payload;
+      let partialState;
+      if (typeof payload === 'function') {
+        // Updater function
+        if (__DEV__) {
+          enterDisallowedContextReadInDEV();
+          if (
             debugRenderPhaseSideEffects ||
             debugRenderPhaseSideEffectsForStrictMode &&
-            workInProgress.mode & StrictMode)
-            {
-              payload.call(instance, prevState, nextProps);
-            }
+            workInProgress.mode & StrictMode) {
+            payload.call(instance, prevState, nextProps);
           }
-          partialState = payload.call(instance, prevState, nextProps);
-          if (__DEV__) {
-            exitDisallowedContextReadInDEV();
-          }
-        } else {
-          // Partial state object
-          partialState = payload;
         }
-        if (partialState === null || partialState === undefined) {
-          // Null and undefined are treated as no-ops.
-          return prevState;
+        partialState = payload.call(instance, prevState, nextProps);
+        if (__DEV__) {
+          exitDisallowedContextReadInDEV();
         }
-        // Merge the partial state and the previous state.
-        return Object.assign({}, prevState, partialState);
+      } else {
+        // TRACE[Render] 初次渲染
+        // Partial state object
+        partialState = payload;
       }
-    case ForceUpdate:{
-        hasForceUpdate = true;
+      if (partialState === null || partialState === undefined) {
+        // Null and undefined are treated as no-ops.
         return prevState;
-      }}
+      }
+      // Merge the partial state and the previous state.
+      return Object.assign({}, prevState, partialState);
+    }
+    case ForceUpdate: {
+      hasForceUpdate = true;
+      return prevState;
+    }
+  }
 
   return prevState;
 }
 
-export function processUpdateQueue<State>(
-workInProgress: Fiber,
-queue: UpdateQueue<State>,
-props: any,
-instance: any,
-renderExpirationTime: ExpirationTime)
-: undefined {
+export function processUpdateQueue < State > (workInProgress: Fiber,
+  queue: UpdateQueue < State > ,
+  props: any,
+  instance: any,
+  renderExpirationTime: ExpirationTime
+): void {
   hasForceUpdate = false;
 
   queue = ensureWorkInProgressQueueIsAClone(workInProgress, queue);
@@ -454,15 +478,16 @@ renderExpirationTime: ExpirationTime)
         newExpirationTime = updateExpirationTime;
       }
     } else {
+      // TRACE[Render] 初次渲染
       // This update does have sufficient priority. Process it and compute
       // a new result.
       resultState = getStateFromUpdate(
-      workInProgress,
-      queue,
-      update,
-      resultState,
-      props,
-      instance);
+        workInProgress,
+        queue,
+        update,
+        resultState,
+        props,
+        instance);
 
       const callback = update.callback;
       if (callback !== null) {
@@ -483,6 +508,7 @@ renderExpirationTime: ExpirationTime)
 
   // Separately, iterate though the list of captured updates.
   let newFirstCapturedUpdate = null;
+  // TRACE[Render] 初次渲染 queue.firstCapturedUpdate 为 null
   update = queue.firstCapturedUpdate;
   while (update !== null) {
     const updateExpirationTime = update.expirationTime;
@@ -504,15 +530,16 @@ renderExpirationTime: ExpirationTime)
         newExpirationTime = updateExpirationTime;
       }
     } else {
+      // TRACE[Render] 初次渲染
       // This update does have sufficient priority. Process it and compute
       // a new result.
       resultState = getStateFromUpdate(
-      workInProgress,
-      queue,
-      update,
-      resultState,
-      props,
-      instance);
+        workInProgress,
+        queue,
+        update,
+        resultState,
+        props,
+        instance);
 
       const callback = update.callback;
       if (callback !== null) {
@@ -531,14 +558,17 @@ renderExpirationTime: ExpirationTime)
   }
 
   if (newFirstUpdate === null) {
+      // TRACE[Render] 初次渲染
     queue.lastUpdate = null;
   }
   if (newFirstCapturedUpdate === null) {
+      // TRACE[Render] 初次渲染
     queue.lastCapturedUpdate = null;
   } else {
     workInProgress.effectTag |= Callback;
   }
   if (newFirstUpdate === null && newFirstCapturedUpdate === null) {
+    // TRACE[Render] 初次渲染
     // We processed every update, without skipping. That means the new base
     // state is the same as the result state.
     newBaseState = resultState;
@@ -565,10 +595,10 @@ renderExpirationTime: ExpirationTime)
 
 function callCallback(callback, context) {
   invariant(
-  typeof callback === 'function',
-  'Invalid argument passed as callback. Expected a function. Instead ' +
-  'received: %s',
-  callback);
+    typeof callback === 'function',
+    'Invalid argument passed as callback. Expected a function. Instead ' +
+    'received: %s',
+    callback);
 
   callback.call(context);
 }
@@ -581,12 +611,11 @@ export function checkHasForceUpdateAfterProcessing(): boolean {
   return hasForceUpdate;
 }
 
-export function commitUpdateQueue<State>(
-finishedWork: Fiber,
-finishedQueue: UpdateQueue<State>,
-instance: any,
-renderExpirationTime: ExpirationTime)
-: undefined {
+export function commitUpdateQueue < State > (
+  finishedWork: Fiber,
+  finishedQueue: UpdateQueue < State > ,
+  instance: any,
+  renderExpirationTime: ExpirationTime): undefined {
   // If the finished render included captured updates, and there are still
   // lower priority updates left over, we need to keep the captured updates
   // in the queue so that they are rebased and not dropped once we process the
@@ -598,7 +627,8 @@ renderExpirationTime: ExpirationTime)
       finishedQueue.lastUpdate = finishedQueue.lastCapturedUpdate;
     }
     // Clear the list of captured updates.
-    finishedQueue.firstCapturedUpdate = finishedQueue.lastCapturedUpdate = null;
+    finishedQueue.firstCapturedUpdate = finishedQueue.lastCapturedUpdate =
+      null;
   }
 
   // Commit the effects
@@ -609,10 +639,9 @@ renderExpirationTime: ExpirationTime)
   finishedQueue.firstCapturedEffect = finishedQueue.lastCapturedEffect = null;
 }
 
-function commitUpdateEffects<State>(effect:
-Update<State> | null, instance:
-any)
-: void {
+function commitUpdateEffects < State > (effect:
+  Update < State > | null, instance:
+  any): void {
   while (effect !== null) {
     const callback = effect.callback;
     if (callback !== null) {

@@ -182,7 +182,7 @@ type Batch = FiberRootBatch & {
   _didComplete: boolean;};
 
 
-type Root = {
+interface Root {
   render: (children: ReactNodeList, callback: () => unknown | null | undefined) => Work;
   unmount: (callback: () => unknown | null | undefined) => Work;
   legacy_renderSubtreeIntoContainer: (parentComponent:
@@ -323,9 +323,9 @@ type Work = {
 
 
 /**
-                          * 在 this._onCommit 被调用时，执行 this.then 传入的所有 callback
-                          *
-                          */
+ * 在 this._onCommit 被调用时，执行 this.then 传入的所有 callback
+ *
+ */
 function ReactWork() {
   this._callbacks = null;
   this._didCommit = false;
@@ -366,89 +366,94 @@ ReactWork.prototype._onCommit = function (): undefined {
   }
 };
 
-function ReactRoot(container:
-DOMContainer, isConcurrent:
-boolean, hydrate:
-boolean)
-{
-  const root = createContainer(container, isConcurrent, hydrate);
-  this._internalRoot = root;
+class ReactRoot implements Root {
+    _internalRoot: FiberRoot;
+
+   constructor(container: DOMContainer, isConcurrent: boolean, hydrate: boolean) {
+      const root = createContainer(container, isConcurrent, hydrate);
+      this._internalRoot = root;
+   }
+
+   render (
+    children: ReactNodeList,
+    callback: () => unknown | null | undefined)
+    : Work {
+      const root = this._internalRoot;
+      const work = new ReactWork();
+      callback = callback === undefined ? null : callback;
+      if (__DEV__) {
+        warnOnInvalidCallback(callback, 'render');
+      }
+      if (callback !== null) {
+        // callback 是 ReactDOM.render 的第三个参数
+        work.then(callback);
+      }
+      //  TRACE[Render] 开始更新 DOM
+      updateContainer(children, root, null, work._onCommit);
+      return work;
+    }
+
+    unmount (callback: () => unknown | null | undefined): Work {
+      const root = this._internalRoot;
+      const work = new ReactWork();
+      callback = callback === undefined ? null : callback;
+      if (__DEV__) {
+        warnOnInvalidCallback(callback, 'render');
+      }
+      if (callback !== null) {
+        work.then(callback);
+      }
+      updateContainer(null, root, null, work._onCommit);
+      return work;
+    }
+
+    legacy_renderSubtreeIntoContainer (
+      parentComponent: React$Component<any, any> | null | undefined,
+      children: ReactNodeList,
+      callback: () => unknown | null | undefined)
+      : Work {
+        const root = this._internalRoot;
+        const work = new ReactWork();
+        callback = callback === undefined ? null : callback;
+        if (__DEV__) {
+          warnOnInvalidCallback(callback, 'render');
+        }
+        if (callback !== null) {
+          work.then(callback);
+        }
+        updateContainer(children, root, parentComponent, work._onCommit);
+        return work;
+      }
+
+      createBatch (): Batch {
+        const batch = new ReactBatch(this);
+        const expirationTime = batch._expirationTime;
+
+        const internalRoot = this._internalRoot;
+        const firstBatch = internalRoot.firstBatch;
+        if (firstBatch === null) {
+          internalRoot.firstBatch = batch;
+          batch._next = null;
+        } else {
+          // Insert sorted by expiration time then insertion order
+          let insertAfter = null;
+          let insertBefore = firstBatch;
+          while (
+          insertBefore !== null &&
+          insertBefore._expirationTime >= expirationTime)
+          {
+            insertAfter = insertBefore;
+            insertBefore = insertBefore._next;
+          }
+          batch._next = insertBefore;
+          if (insertAfter !== null) {
+            insertAfter._next = batch;
+          }
+        }
+
+        return batch;
+      }
 }
-ReactRoot.prototype.render = function (
-children: ReactNodeList,
-callback: () => unknown | null | undefined)
-: Work {
-  const root = this._internalRoot;
-  const work = new ReactWork();
-  callback = callback === undefined ? null : callback;
-  if (__DEV__) {
-    warnOnInvalidCallback(callback, 'render');
-  }
-  if (callback !== null) {
-    // callback 是 ReactDOM.render 的第三个参数
-    work.then(callback);
-  }
-  updateContainer(children, root, null, work._onCommit);
-  return work;
-};
-ReactRoot.prototype.unmount = function (callback: () => unknown | null | undefined): Work {
-  const root = this._internalRoot;
-  const work = new ReactWork();
-  callback = callback === undefined ? null : callback;
-  if (__DEV__) {
-    warnOnInvalidCallback(callback, 'render');
-  }
-  if (callback !== null) {
-    work.then(callback);
-  }
-  updateContainer(null, root, null, work._onCommit);
-  return work;
-};
-ReactRoot.prototype.legacy_renderSubtreeIntoContainer = function (
-parentComponent: React$Component<any, any> | null | undefined,
-children: ReactNodeList,
-callback: () => unknown | null | undefined)
-: Work {
-  const root = this._internalRoot;
-  const work = new ReactWork();
-  callback = callback === undefined ? null : callback;
-  if (__DEV__) {
-    warnOnInvalidCallback(callback, 'render');
-  }
-  if (callback !== null) {
-    work.then(callback);
-  }
-  updateContainer(children, root, parentComponent, work._onCommit);
-  return work;
-};
-ReactRoot.prototype.createBatch = function (): Batch {
-  const batch = new ReactBatch(this);
-  const expirationTime = batch._expirationTime;
-
-  const internalRoot = this._internalRoot;
-  const firstBatch = internalRoot.firstBatch;
-  if (firstBatch === null) {
-    internalRoot.firstBatch = batch;
-    batch._next = null;
-  } else {
-    // Insert sorted by expiration time then insertion order
-    let insertAfter = null;
-    let insertBefore = firstBatch;
-    while (
-    insertBefore !== null &&
-    insertBefore._expirationTime >= expirationTime)
-    {
-      insertAfter = insertBefore;
-      insertBefore = insertBefore._next;
-    }
-    batch._next = insertBefore;
-    if (insertAfter !== null) {
-      insertAfter._next = batch;
-    }
-  }
-
-  return batch;
-};
 
 /**
     * True if the supplied DOM node is a valid node element.
@@ -562,16 +567,17 @@ Function | null | undefined)
   if (__DEV__) {
     topLevelUpdateWarnings(container);
   }
-
+  // TRACE[Render]
   // TODO: Without `any` type, Flow says "Property cannot be accessed on any
   // member of intersection type." Whyyyyyy.
   let root: Root = (container._reactRootContainer as any);
   if (!root) {
+    // TRACE[Render]
     // Initial mount
     root = container._reactRootContainer = legacyCreateRootFromDOMContainer(
     container,
     forceHydrate);
-
+    // TRACE[Render] ReactDOM.render 的第三个参数
     if (typeof callback === 'function') {
       const originalCallback = callback;
       callback = function () {
@@ -581,6 +587,7 @@ Function | null | undefined)
     }
     // Initial mount should not be batched.
     unbatchedUpdates(() => {
+      // TRACE[Render] 初次渲染 parentComponent 为 null
       if (parentComponent != null) {
         root.legacy_renderSubtreeIntoContainer(
         parentComponent,
@@ -588,6 +595,7 @@ Function | null | undefined)
         callback);
 
       } else {
+        // TRACE[Render]
         root.render(children, callback);
       }
     });
@@ -684,7 +692,7 @@ const ReactDOM: Object = {
     callback);
 
   },
-
+  // TRACE[Render]
   render(
   element: React$Element<any>,
   container: DOMContainer,

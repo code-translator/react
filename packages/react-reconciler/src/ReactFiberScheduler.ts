@@ -1191,7 +1191,7 @@ function performUnitOfWork(workInProgress: Fiber): Fiber | null {
     if (workInProgress.mode & ProfileMode) {
       startProfilerTimer(workInProgress);
     }
-
+    // TRACE[Render] 初次渲染
     next = beginWork(current, workInProgress, nextRenderExpirationTime);
     workInProgress.memoizedProps = workInProgress.pendingProps;
 
@@ -1228,7 +1228,12 @@ function performUnitOfWork(workInProgress: Fiber): Fiber | null {
   return next;
 }
 
-function workLoop(isYieldy) {
+/**
+ *
+ *
+ * @param {boolean} isYieldy
+ */
+function workLoop(isYieldy: boolean) {
   if (!isYieldy) {
     // Flush work without yielding
     while (nextUnitOfWork !== null) {
@@ -1243,12 +1248,12 @@ function workLoop(isYieldy) {
 }
 
 function renderRoot(root: FiberRoot, isYieldy: boolean): void {
-  invariant(
-  !isWorking,
-  'renderRoot was called recursively. This error is likely caused ' +
-  'by a bug in React. Please file an issue.');
+  invariant(!isWorking,
+    'renderRoot was called recursively. This error is likely caused ' +
+    'by a bug in React. Please file an issue.');
 
 
+  // TRACE[Render] 没有效果
   flushPassiveEffects();
 
   isWorking = true;
@@ -1335,6 +1340,7 @@ function renderRoot(root: FiberRoot, isYieldy: boolean): void {
 
   do {
     try {
+      // TRACE[Render] 初次渲染
       workLoop(isYieldy);
     } catch (thrownValue) {
       resetContextDependences();
@@ -1766,6 +1772,7 @@ function retryTimedOutBoundary(boundaryFiber: Fiber, thenable: Thenable) {
 }
 
 function scheduleWorkToRoot(fiber: Fiber, expirationTime): FiberRoot | null {
+  // TRACE[Render] 暂时不懂
   recordScheduleUpdate();
 
   if (__DEV__) {
@@ -1779,14 +1786,17 @@ function scheduleWorkToRoot(fiber: Fiber, expirationTime): FiberRoot | null {
   if (fiber.expirationTime < expirationTime) {
     fiber.expirationTime = expirationTime;
   }
+  // TRACE[Render] 初次渲染 fiber.alternate 为 null
   let alternate = fiber.alternate;
   if (alternate !== null && alternate.expirationTime < expirationTime) {
     alternate.expirationTime = expirationTime;
   }
   // Walk the parent path to the root and update the child expiration time.
+  // TRACE[Render] 初次渲染 fiber.return 为 null
   let node = fiber.return;
   let root = null;
   if (node === null && fiber.tag === HostRoot) {
+    // TRACE[Render] 初次渲染 fiber.return 为 null
     root = fiber.stateNode;
   } else {
     while (node !== null) {
@@ -1812,9 +1822,10 @@ function scheduleWorkToRoot(fiber: Fiber, expirationTime): FiberRoot | null {
       node = node.return;
     }
   }
-
+    // TRACE[Render] 初次渲染 enableSchedulerTracing 为 true
   if (enableSchedulerTracing) {
     if (root !== null) {
+      // TRACE[Render] 这是应该是上次被打断的任务
       const interactions = __interactionsRef.current;
       if (interactions.size > 0) {
         const pendingInteractionMap = root.pendingInteractionMap;
@@ -1900,15 +1911,17 @@ function scheduleWork(fiber: Fiber, expirationTime: ExpirationTime) {
     interruptedBy = fiber;
     resetStack();
   }
+  // TRACE[Render] 暂时不清楚
   markPendingPriorityLevel(root, expirationTime);
   if (
-  // If we're in the render phase, we don't need to schedule this root
-  // for an update, because we'll do it before we exit...
-  !isWorking ||
-  isCommitting ||
-  // ...unless this is a different root than the one we're rendering.
-  nextRoot !== root)
+    // If we're in the render phase, we don't need to schedule this root
+    // for an update, because we'll do it before we exit...
+    !isWorking ||
+    isCommitting ||
+    // ...unless this is a different root than the one we're rendering.
+    nextRoot !== root)
   {
+    // TRACE[Render]
     const rootExpirationTime = root.expirationTime;
     requestWork(root, rootExpirationTime);
   }
@@ -1942,6 +1955,7 @@ D)
 
 // Linked-list of roots
 let firstScheduledRoot: FiberRoot | null = null;
+/** 全局变量 */
 let lastScheduledRoot: FiberRoot | null = null;
 
 let callbackExpirationTime: ExpirationTime = NoWork;
@@ -1953,6 +1967,7 @@ let lowestPriorityPendingInteractiveExpirationTime: ExpirationTime = NoWork;
 let hasUnhandledError: boolean = false;
 let unhandledError: unknown | null = null;
 
+/** 默认 false */
 let isBatchingUpdates: boolean = false;
 let isUnbatchingUpdates: boolean = false;
 
@@ -2108,6 +2123,7 @@ function requestCurrentTime() {
 // requestWork is called by the scheduler whenever a root receives an update.
 // It's up to the renderer to call renderRoot at some point in the future.
 function requestWork(root: FiberRoot, expirationTime: ExpirationTime) {
+  // TRACE[Render] 将 root 加入到更新队列
   addRootToSchedule(root, expirationTime);
   if (isRendering) {
     // Prevent reentrancy. Remaining work will be scheduled at the end of
@@ -2117,6 +2133,7 @@ function requestWork(root: FiberRoot, expirationTime: ExpirationTime) {
 
   if (isBatchingUpdates) {
     // Flush work at the end of the batch.
+    // TRACE[Render] 这就是 unbatchUpdate 设置过是否批量操作的
     if (isUnbatchingUpdates) {
       // ...unless we're inside unbatchedUpdates, in which case we should
       // flush it now.
@@ -2129,6 +2146,7 @@ function requestWork(root: FiberRoot, expirationTime: ExpirationTime) {
 
   // TODO: Get rid of Sync and use current time?
   if (expirationTime === Sync) {
+    // TRACE[Render] 包装 performWork
     performSyncWork();
   } else {
     scheduleCallbackWithExpirationTime(root, expirationTime);
@@ -2159,6 +2177,9 @@ function addRootToSchedule(root: FiberRoot, expirationTime: ExpirationTime) {
   }
 }
 
+/**
+ *  找到优先级最高的 Root 赋值给 nextFlushedRoot
+ */
 function findHighestPriorityRoot() {
   let highestPriorityWork = NoWork;
   let highestPriorityRoot = null;
@@ -2270,6 +2291,7 @@ function performSyncWork() {
 function performWork(minExpirationTime: ExpirationTime, isYieldy: boolean) {
   // Keep working on roots until there's no more work, or until there's a higher
   // priority event.
+  // 找到优先级最高的 Root 赋值给 nextFlushedRoot，在下面就使用了 nextFlushedRoot
   findHighestPriorityRoot();
 
   if (isYieldy) {
@@ -2283,10 +2305,10 @@ function performWork(minExpirationTime: ExpirationTime, isYieldy: boolean) {
     }
 
     while (
-    nextFlushedRoot !== null &&
-    nextFlushedExpirationTime !== NoWork &&
-    minExpirationTime <= nextFlushedExpirationTime &&
-    !(didYield && currentRendererTime > nextFlushedExpirationTime))
+      nextFlushedRoot !== null &&
+      nextFlushedExpirationTime !== NoWork &&
+      minExpirationTime <= nextFlushedExpirationTime &&
+      !(didYield && currentRendererTime > nextFlushedExpirationTime))
     {
       performWorkOnRoot(
       nextFlushedRoot,
@@ -2298,10 +2320,11 @@ function performWork(minExpirationTime: ExpirationTime, isYieldy: boolean) {
       currentSchedulerTime = currentRendererTime;
     }
   } else {
+    // TRACE[Render] 初次渲染
     while (
-    nextFlushedRoot !== null &&
-    nextFlushedExpirationTime !== NoWork &&
-    minExpirationTime <= nextFlushedExpirationTime)
+      nextFlushedRoot !== null &&
+      nextFlushedExpirationTime !== NoWork &&
+      minExpirationTime <= nextFlushedExpirationTime)
     {
       performWorkOnRoot(nextFlushedRoot, nextFlushedExpirationTime, false);
       findHighestPriorityRoot();
@@ -2372,10 +2395,14 @@ function finishRendering() {
   }
 }
 
-function performWorkOnRoot(root:
-FiberRoot, expirationTime:
-ExpirationTime, isYieldy:
-boolean)
+/**
+ *
+ *
+ * @param {FiberRoot} root
+ * @param {ExpirationTime} expirationTime
+ * @param {boolean} isYieldy 是否是异步任务
+ */
+function performWorkOnRoot(root: FiberRoot, expirationTime: ExpirationTime, isYieldy: boolean)
 {
   invariant(
   !isRendering,
@@ -2414,6 +2441,7 @@ boolean)
       }
     }
   } else {
+    // TRACE[Render] 初次渲染
     // Flush async work.
     let finishedWork = root.finishedWork;
     if (finishedWork !== null) {
@@ -2522,7 +2550,9 @@ function batchedUpdates<A, R>(fn: (a: A) => R, a: A): R {
 
 // TODO: Batching should be implemented at the renderer level, not inside
 // the reconciler.
-function unbatchedUpdates<A, R>(fn: (a: A) => R, a: A): R {
+// TRACE[Render] 非更新，对照 batchedUpdates 看应该是 fn 里面有加入任务逻辑
+// unbatchedUpdates，应该是在 fn 直接就将任务执行了
+function unbatchedUpdates<A, R>(fn: (a: A) => R, a?: A): R {
   if (isBatchingUpdates && !isUnbatchingUpdates) {
     isUnbatchingUpdates = true;
     try {
