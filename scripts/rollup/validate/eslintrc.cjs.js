@@ -26,9 +26,10 @@ module.exports = {
     trustedTypes: true,
 
     // Scheduler profiling
-    SharedArrayBuffer: true,
     Int32Array: true,
     ArrayBuffer: true,
+
+    TaskController: true,
 
     // Flight
     Uint8Array: true,
@@ -40,6 +41,7 @@ module.exports = {
 
     // jest
     expect: true,
+    jest: true,
   },
   parserOptions: {
     ecmaVersion: 5,

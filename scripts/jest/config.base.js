@@ -1,6 +1,7 @@
 'use strict';
 
 module.exports = {
+  globalSetup: require.resolve('./setupGlobal.js'),
   haste: {
     hasteImplModulePath: require.resolve('./noHaste.js'),
   },
@@ -22,6 +23,7 @@ module.exports = {
   timers: 'fake',
   snapshotSerializers: [require.resolve('jest-snapshot-serializer-raw')],
 
-  // TODO: Upgrade to Jest 26 which uses jsdom 16 by default.
-  testEnvironment: require.resolve('jest-environment-jsdom-sixteen'),
+  testSequencer: require.resolve('./jestSequencer'),
+
+  testEnvironment: 'jsdom',
 };

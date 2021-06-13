@@ -19,7 +19,6 @@ describe('ReactScope', () => {
     jest.resetModules();
     ReactFeatureFlags = require('shared/ReactFeatureFlags');
     ReactFeatureFlags.enableScopeAPI = true;
-    ReactFeatureFlags.enableDeprecatedFlareAPI = true;
     React = require('react');
     Scheduler = require('scheduler');
   });
@@ -40,7 +39,7 @@ describe('ReactScope', () => {
       container = null;
     });
 
-    // @gate experimental
+    // @gate www
     it('DO_NOT_USE_queryAllNodes() works as intended', () => {
       const testScopeQuery = (type, props) => true;
       const TestScope = React.unstable_Scope;
@@ -75,7 +74,7 @@ describe('ReactScope', () => {
       expect(scopeRef.current).toBe(null);
     });
 
-    // @gate experimental
+    // @gate www
     it('DO_NOT_USE_queryAllNodes() provides the correct host instance', () => {
       const testScopeQuery = (type, props) => type === 'div';
       const TestScope = React.unstable_Scope;
@@ -122,7 +121,7 @@ describe('ReactScope', () => {
       expect(scopeRef.current).toBe(null);
     });
 
-    // @gate experimental
+    // @gate www
     it('DO_NOT_USE_queryFirstNode() works as intended', () => {
       const testScopeQuery = (type, props) => true;
       const TestScope = React.unstable_Scope;
@@ -157,7 +156,7 @@ describe('ReactScope', () => {
       expect(scopeRef.current).toBe(null);
     });
 
-    // @gate experimental
+    // @gate www
     it('containsNode() works as intended', () => {
       const TestScope = React.unstable_Scope;
       const scopeRef = React.createRef();
@@ -207,7 +206,7 @@ describe('ReactScope', () => {
       expect(scopeRef.current.containsNode(emRef.current)).toBe(false);
     });
 
-    // @gate experimental
+    // @gate www
     it('scopes support server-side rendering and hydration', () => {
       const TestScope = React.unstable_Scope;
       const scopeRef = React.createRef();
@@ -229,7 +228,7 @@ describe('ReactScope', () => {
       }
       const html = ReactDOMServer.renderToString(<Test />);
       expect(html).toBe(
-        '<div data-reactroot=""><div>DIV</div><span>SPAN</span><a>A</a><div>Outside content!</div></div>',
+        '<div><div>DIV</div><span>SPAN</span><a>A</a><div>Outside content!</div></div>',
       );
       container.innerHTML = html;
       ReactDOM.hydrate(<Test />, container);
@@ -238,7 +237,7 @@ describe('ReactScope', () => {
       expect(nodes).toEqual([divRef.current, spanRef.current, aRef.current]);
     });
 
-    // @gate experimental
+    // @gate www
     it('getChildContextValues() works as intended', () => {
       const TestContext = React.createContext();
       const TestScope = React.unstable_Scope;
@@ -267,7 +266,7 @@ describe('ReactScope', () => {
       expect(scopeRef.current).toBe(null);
     });
 
-    // @gate experimental
+    // @gate www
     it('correctly works with suspended boundaries that are hydrated', async () => {
       let suspend = false;
       let resolve;
@@ -342,7 +341,7 @@ describe('ReactScope', () => {
       ReactTestRenderer = require('react-test-renderer');
     });
 
-    // @gate experimental
+    // @gate www
     it('DO_NOT_USE_queryAllNodes() works as intended', () => {
       const testScopeQuery = (type, props) => true;
       const TestScope = React.unstable_Scope;
@@ -379,7 +378,7 @@ describe('ReactScope', () => {
       expect(nodes).toEqual([aRef.current, divRef.current, spanRef.current]);
     });
 
-    // @gate experimental
+    // @gate www
     it('DO_NOT_USE_queryFirstNode() works as intended', () => {
       const testScopeQuery = (type, props) => true;
       const TestScope = React.unstable_Scope;
@@ -416,7 +415,7 @@ describe('ReactScope', () => {
       expect(node).toEqual(aRef.current);
     });
 
-    // @gate experimental
+    // @gate www
     it('containsNode() works as intended', () => {
       const TestScope = React.unstable_Scope;
       const scopeRef = React.createRef();
